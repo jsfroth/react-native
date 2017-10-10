@@ -21,18 +21,19 @@ type DevToolsPlugin = {
   connectToDevTools: (connection: DevToolsPluginConnection) => void,
 };
 
-let register = function () {
+let register = function() {
   // noop
 };
 
 if (__DEV__) {
   const AppState = require('AppState');
   const WebSocket = require('WebSocket');
-  const {PlatformConstants} = require('NativeModules');
+  const { PlatformConstants } = require('NativeModules');
   /* $FlowFixMe(>=0.54.0 site=react_native_oss) This comment suppresses an
    * error found when Flow v0.54 was deployed. To see the error delete this
    * comment and run Flow. */
   const reactDevTools = require('react-devtools-core');
+  const getDevServer = require('getDevServer');
 
   // Initialize dev tools only if the native module for WebSocket is available
   if (WebSocket.isAvailable) {
@@ -42,10 +43,15 @@ if (__DEV__) {
     // or the code will throw for bundles that don't have it.
     const isAppActive = () => AppState.currentState !== 'background';
 
+    // Try to connect to the same host as the dev server
+    const match = getDevServer().url.match(/^https?:\/\/.*?\//);
+    const devHost = match ? match[0] : 'localhost';
+
     // Special case: Genymotion is running on a different host.
-    const host = PlatformConstants && PlatformConstants.ServerHost ?
-      PlatformConstants.ServerHost.split(':')[0] :
-      'localhost';
+    const host =
+      PlatformConstants && PlatformConstants.ServerHost
+        ? PlatformConstants.ServerHost.split(':')[0]
+        : devHost;
 
     reactDevTools.connectToDevTools({
       isAppActive,
